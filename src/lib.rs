@@ -37,15 +37,16 @@ impl<T> IntoIterator for RingBuffer<T> {
     type Item = T;
     type IntoIter = IntoIter<T>;
 
-    fn into_iter(mut self) -> Self::IntoIter {
-        self.store.rotate_left(self.start);
-        if self.start <= self.end {
-            self.store.truncate(self.end - self.start);
+    fn into_iter(self) -> Self::IntoIter {
+        let RingBuffer { mut store, start, end, buffer_len } = self;
+        store.rotate_left(start);
+        if start <= end {
+            store.truncate(end - start);
         } else {
-            self.store.truncate(self.buffer_len - self.start + self.end);
+            store.truncate(buffer_len - start + end);
         }
-        self.store.reverse();
-        IntoIter(self.store.into_iter().map(|x| x.unwrap()).collect())
+        store.reverse();
+        IntoIter(store.into_iter().map(|x| x.unwrap()).collect())
     }
 }
 
