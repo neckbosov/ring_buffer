@@ -14,8 +14,11 @@ impl<T> RingBuffer<T> {
         RingBuffer { store: v, start: 0, end: 0, buffer_len: n }
     }
     pub fn push(&mut self, val: T) {
+        if self.buffer_len == 0 {
+            panic!("Can not push to empty buffer")
+        }
         if self.start == self.end {
-            if let Some(_) = self.store[self.start] {
+            if let Some(_) = self.store.get(self.start).unwrap_or(&None) {
                 self.start = (self.start + 1) % self.buffer_len;
             }
         }
@@ -23,7 +26,7 @@ impl<T> RingBuffer<T> {
         self.end = (self.end + 1) % self.buffer_len;
     }
     pub fn pop(&mut self) -> Option<T> {
-        if let None = self.store[self.start] {
+        if let None = self.store.get(self.start).unwrap_or(&None) {
             None
         } else {
             let ret = std::mem::replace(&mut self.store[self.start], None);
@@ -96,5 +99,20 @@ mod tests {
         assert_eq!(buf.pop(), None);
         buf.push(3);
         assert_eq!(buf.pop(), Some(3));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_empty_push() {
+        let mut buf = RingBuffer::with_capacity(0);
+        buf.push(0);
+    }
+
+    #[test]
+    fn test_empty_pop_iter() {
+        let mut buf: RingBuffer<i32> = RingBuffer::with_capacity(0);
+        assert_eq!(buf.pop(), None);
+        let v: Vec<_> = buf.into_iter().collect();
+        assert_eq!(v.len(), 0);
     }
 }
